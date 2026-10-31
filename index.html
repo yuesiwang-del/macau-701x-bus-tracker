@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>澳门701X巴士报站</title>
+<style>
+:root{font-family:system-ui,"Microsoft YaHei",sans-serif;color:#152743;background:#f3f7fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1100px;margin:auto;padding:28px 16px}header{background:#12355a;color:white;padding:28px;border-radius:18px}h1{margin:0 0 7px;font-size:32px}.sub{color:#c5d8ef}.banner{background:#fff4db;color:#895b0c;padding:11px 16px;border-radius:9px;margin:15px 0}.grid{display:grid;grid-template-columns:1fr 300px;gap:18px}.panel{background:white;border-radius:16px;padding:23px;box-shadow:0 5px 20px #1d35570d}.route{padding:15px 0}.stop{display:flex;align-items:stretch;gap:14px;min-height:55px;cursor:pointer}.line{width:30px;display:flex;flex-direction:column;align-items:center}.dot{width:19px;height:19px;border:4px solid #2c76b8;border-radius:50%;background:white;z-index:1}.track{width:4px;background:#a7c9de;flex:1}.stop.active .dot{background:#1cac7b;border-color:#1cac7b}.stop .name{padding:0 0 20px;font-size:15px}.bus{color:#1670c9;font-weight:700;font-size:18px;margin-left:8px}.stop.active .name{font-weight:800;color:#12845c}.big{font-size:44px;font-weight:800;color:#157bce;margin:10px 0}.meta{color:#60758c;font-size:13px}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}button{background:#165e9d;border:0;border-radius:9px;padding:9px 14px;color:white;cursor:pointer}button:hover{background:#12416f}select{width:100%;padding:10px;border:1px solid #d4e0ed;border-radius:8px;margin:12px 0}a{color:#176cbe}footer{margin:24px 0;color:#6d8092;font-size:13px}@media(max-width:750px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
+</style></head>
+<body><div class="wrap"><header><h1>🚌 澳门701X 巴士路线追踪</h1><div class="sub">Macau 701X Bus Route Tracker · 循环线</div></header>
+<div class="banner">教学演示：站点顺序为公开资料整理快照；车辆位置、数量和预计到站时间均为模拟，不是真实GPS。</div>
+<div class="grid"><section class="panel"><h2>沿线站点</h2><p class="meta">点击站点即可设置候车位置。蓝色🚌标记模拟运行中的车辆。</p><div id="route" class="route"></div></section>
+<aside><section class="panel"><h2>候车信息</h2><label for="choose">选择候车站</label><select id="choose"></select><div class="meta">距离最近一辆模拟巴士</div><div class="big" id="distance">—</div><div class="meta">预计到达（模拟，每站约2分钟）</div><div class="big" id="eta">—</div><div class="meta" id="status"></div>
+<div class="buttons"><button id="toggle">暂停动画</button><button id="next">前进一步</button><button id="reset">重置</button></div></section>
+<section class="panel" style="margin-top:18px"><h3>数据说明</h3><p>路线：701X（循环线）</p><p>路线资料：<a href="https://motransportinfo.com/cn/route/701X/0" target="_blank" rel="noopener">澳门交通资讯网</a></p><p>目前没有接入真实车辆定位。站点坐标和路线地图等待数据核实。</p></section></aside></div><footer>课堂爬虫与可视化项目 · 使用前请核对最新官方线路信息</footer></div>
+<script>
+const fallback=["澳门大学总站","横琴澳方口岸","莲花路／新濠影汇","连贯公路／新濠影汇","连贯公路／巴黎人","永进马路／美狮美高梅","路氹新城","溜冰路／东亚运","机场大马路／上葡京","射击路／上葡京","体育馆大马路／上葡京","路氹东／永利皇宫","霍英东马路／科技大学","望德圣母湾马路／新濠天地","连贯公路／威尼斯人","新城大马路／银河","路氹西／金光会展","路氹城马路／莲花圆形地","莲花路停车场","横琴澳方口岸","澳门大学总站"];
+let stops=fallback, positions=[1,8,15],selected=5,running=true;
+const route=document.querySelector('#route'),choose=document.querySelector('#choose');
+function remaining(bus,target){return (target-bus+stops.length)%stops.length}
+function render(){choose.innerHTML=stops.map((s,i)=>'<option value="'+i+'">'+String(i+1).padStart(2,'0')+' · '+s+'</option>').join('');choose.value=selected;
+route.innerHTML=stops.map((s,i)=>'<div class="stop '+(i===selected?'active':'')+'" data-index="'+i+'"><div class="line"><span class="dot"></span>'+(i===stops.length-1?'':'<span class="track"></span>')+'</div><div class="name">'+String(i+1).padStart(2,'0')+' · '+s+(positions.includes(i)?'<span class="bus">🚌</span>':'')+'</div></div>').join('');
+const n=Math.min(...positions.map(p=>remaining(p,selected)));document.querySelector('#distance').textContent=n+' 站';document.querySelector('#eta').textContent=(n*2)+' 分钟';document.querySelector('#status').textContent='正在模拟 '+positions.length+' 辆车辆，下一次动画推进后自动更新';}
+choose.onchange=e=>{selected=Number(e.target.value);render()};route.onclick=e=>{const row=e.target.closest('.stop');if(row){selected=Number(row.dataset.index);render()}};
+function advance(){positions=positions.map(p=>(p+1)%stops.length);render()}
+document.querySelector('#next').onclick=advance;document.querySelector('#toggle').onclick=()=>{running=!running;document.querySelector('#toggle').textContent=running?'暂停动画':'继续动画'};document.querySelector('#reset').onclick=()=>{positions=[1,8,15];selected=5;render()};
+setInterval(()=>{if(running)advance()},3000);
+// Data may be loaded from stops.json when hosted on a web server; file:// will use the built-in snapshot.
+if(location.protocol!=='file:')fetch('stops.json').then(r=>{if(!r.ok)throw Error(r.status);return r.json()}).then(d=>{if(Array.isArray(d.stops)&&d.stops.length>=15){stops=d.stops;positions=positions.map(x=>x%stops.length);selected=Math.min(selected,stops.length-1);render()}}).catch(()=>{});
+render();
+</script></body></html>
